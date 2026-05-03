@@ -449,13 +449,17 @@
         analytics.subjectData[subj].time += timeSpent;
         analytics.subjectData[subj].chapters[chap].time += timeSpent;
 
-        // Logic check
-        if (q.question_type === "mcq_multiple") {
+        // Logic check (Upgraded with Smart Matching)
+        const qTypeLower = (q.question_type || "").toLowerCase();
+        const isMulti = qTypeLower.includes("multi");
+        const isNumerical = qTypeLower.includes("numerical") || qTypeLower.includes("integer") || qTypeLower.includes("fill");
+
+        if (isMulti) {
           const uAns = Array.isArray(userRes.selectedOption) ? userRes.selectedOption.sort() : [];
           const cAns = (q.correct_answer_indices || []).sort();
           isAttempted = uAns.length > 0;
           isCorrect = isAttempted && JSON.stringify(uAns) === JSON.stringify(cAns);
-        } else if (q.question_type === "numerical") {
+        } else if (isNumerical) {
           isAttempted = userRes.selectedOption !== null && userRes.selectedOption.toString().trim() !== "";
           isCorrect = isAttempted && userRes.selectedOption.toString().trim() === (q.numerical_answer || "").toString().trim();
         } else {
