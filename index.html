@@ -747,11 +747,7 @@
         loadQuestion(0);
 
         // 3. FORCE FRESH PDF LOAD (Cache Buster)
-        const pdfIframe = document.getElementById('pdf-viewer');
-        if (pdfIframe) {
-          pdfIframe.src = 'reference_paper.pdf?t=' + new Date().getTime();
-        }
-
+        
         // 4. Reveal the Main Exam UI!
         const mainUi = document.getElementById("main-ui");
         if (mainUi) {
