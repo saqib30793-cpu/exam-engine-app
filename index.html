@@ -910,13 +910,28 @@
       document.getElementById("cnt-answered-marked").innerText = counts[STATUS.ANSWERED_MARKED];
     }
 
-    function togglePDF() {
+        function togglePDF() {
+      const pdfViewer = document.getElementById("pdf-viewer");
+
+      // 🚀 SMART MOBILE FIX: If screen is phone-sized, open in a new native tab
+      if (window.innerWidth < 1024) {
+        if (pdfViewer && pdfViewer.src && pdfViewer.src !== window.location.href) {
+          window.open(pdfViewer.src, '_blank');
+        } else {
+          alert("No PDF loaded in memory! Please upload the PDF again on this device.");
+        }
+        return; // Stops the broken side-pane from opening on phones
+      }
+
+      // 💻 DESKTOP LOGIC
       isPdfOpen = !isPdfOpen;
       const pane = document.getElementById("pdf-pane");
       const btn = document.getElementById("btn-toggle-pdf");
 
       if (isPdfOpen) {
         pane.classList.remove("hidden");
+        pane.classList.add("flex"); // Forces iframe to stretch
+        
         btn.innerHTML = '<i data-lucide="file-x-2" class="w-4 h-4"></i> Hide PDF';
         btn.classList.replace("text-slate-300", "text-rose-400");
         btn.classList.replace("hover:text-cyan-400", "hover:text-rose-400");
@@ -924,6 +939,8 @@
         btn.classList.replace("hover:border-cyan-500/50", "hover:border-rose-500/50");
       } else {
         pane.classList.add("hidden");
+        pane.classList.remove("flex");
+        
         if (isPdfMaximized) toggleMaximizePDF();
         btn.innerHTML = '<i data-lucide="file-search" class="w-4 h-4"></i> View PDF';
         btn.classList.replace("text-rose-400", "text-slate-300");
@@ -932,6 +949,7 @@
       }
       lucide.createIcons();
     }
+
 
     function toggleMaximizePDF() {
       isPdfMaximized = !isPdfMaximized;
