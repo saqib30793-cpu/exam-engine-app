@@ -439,10 +439,24 @@ function animateValue(obj, start, end, duration) {
           const cAns = (q.correct_answer_indices || []).sort();
           isAttempted = uAns.length > 0;
           isCorrect = isAttempted && JSON.stringify(uAns) === JSON.stringify(cAns);
-        } else if (isNumerical) {
+                } else if (isNumerical) {
           isAttempted = userRes.selectedOption !== null && userRes.selectedOption.toString().trim() !== "";
-          isCorrect = isAttempted && userRes.selectedOption.toString().trim() === (q.numerical_answer || "").toString().trim();
-        } else {
+          
+          // SMART NUMERICAL EXTRACTOR: Ignores text like "(exactly one) = 90" and compares just the numbers
+          const extractNum = (val) => {
+            if (val === null || val === undefined) return null;
+            const str = String(val).trim();
+            const matches = str.match(/-?\d+(\.\d+)?/g);
+            return matches ? parseFloat(matches[matches.length - 1]) : str.toLowerCase();
+          };
+
+          const uNum = extractNum(userRes.selectedOption);
+          const cNum = extractNum(q.numerical_answer);
+
+          isCorrect = isAttempted && uNum !== null && uNum === cNum;
+        }
+ 
+        else {
           isAttempted = userRes.selectedOption !== null && userRes.selectedOption !== "";
           const cAns = Array.isArray(q.correct_answer_indices) ? q.correct_answer_indices[0] : q.correct_answer_indices;
           isCorrect = isAttempted && userRes.selectedOption === cAns;
@@ -649,15 +663,18 @@ function animateValue(obj, start, end, duration) {
         return; 
       }
 
-      const record = {
+        const record = {
         id: testId,
         date: new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
         scheme: scheme,
+        dppSubject: scheme === "dpp" ? (rawExamData[0]?.subject || "General") : null, // NEW: Tracks DPP subject
         totalScore: analytics.totalScore,
         physics: analytics.subjectData["Physics"]?.score || 0,
         chemistry: analytics.subjectData["Chemistry"]?.score || 0,
         mathematics: analytics.subjectData["Mathematics"]?.score || 0,
       };
+
+
 
       history.push(record);
       localStorage.setItem("examHistory", JSON.stringify(history));
@@ -764,9 +781,36 @@ function animateValue(obj, start, end, duration) {
       });
 
       // 4 Historical Line Charts
+            // 4 Historical Line Charts
       const history = JSON.parse(localStorage.getItem("examHistory")) || [];
-      const relHist = history.filter((h) => h.scheme === examConfig.markingScheme);
+      let relHist = history.filter((h) => h.scheme === examConfig.markingScheme);
       document.getElementById("hist-badge").innerText = examConfig.markingScheme;
+
+      // NEW: DPP Graph Isolation Logic
+      if (examConfig.markingScheme === "dpp") {
+          const currentSubj = rawExamData[0]?.subject || "Physics";
+          
+          // Filter historical data to ONLY show DPPs of the same subject
+          relHist = relHist.filter(h => {
+              if (h.dppSubject) return h.dppSubject === currentSubj;
+              // Fallback for old history: guess based on max score
+              const maxScore = Math.max(h.physics || 0, h.chemistry || 0, h.mathematics || 0);
+              if (currentSubj === "Physics" && maxScore === (h.physics || 0)) return true;
+              if (currentSubj === "Chemistry" && maxScore === (h.chemistry || 0)) return true;
+              if (currentSubj === "Mathematics" && maxScore === (h.mathematics || 0)) return true;
+              return false;
+          });
+
+          // Hide the irrelevant subject graph cards safely
+          ["physics", "chemistry", "math"].forEach(s => {
+              const subjectName = s === "math" ? "mathematics" : s;
+              if (subjectName !== currentSubj.toLowerCase()) {
+                  const canvasEl = document.getElementById(`chart-history-${s}`);
+                  if (canvasEl) canvasEl.closest('.glass-card').style.display = "none";
+              }
+          });
+      }
+
 
       if (relHist.length > 0) {
         const labels = relHist.map((_, i) => `Test ${i + 1}`);
