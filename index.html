@@ -809,13 +809,38 @@
     }
 
     function buildPalette() {
-      const grid = document.getElementById("palette-grid");
-      grid.innerHTML = userState
-        .map(
-          (_, idx) =>
-            `<div onclick="loadQuestion(${idx})" id="pal-${idx}" class="nta-btn ${userState[idx].status}">${idx + 1}</div>`,
-        )
-        .join("");
+      const gridContainer = document.getElementById("palette-grid");
+      gridContainer.innerHTML = "";
+      
+      // Change from a simple grid to a vertical stack of sections
+      gridContainer.className = "flex flex-col gap-5"; 
+
+      const subjects = [...new Set(examData.map((q) => q.subject || "General"))];
+
+      subjects.forEach(sub => {
+        // Create a subject header and a sub-grid for each subject
+        const subSection = document.createElement("div");
+        const safeSub = sub.replace(/\s+/g, "");
+        subSection.innerHTML = `
+            <h4 class="text-[10px] font-extrabold text-slate-400 mb-2.5 uppercase tracking-widest border-b border-slate-100 pb-1.5">${sub}</h4>
+            <div class="grid grid-cols-5 gap-2" id="pal-grid-${safeSub}"></div>
+        `;
+        gridContainer.appendChild(subSection);
+
+        const subGrid = document.getElementById(`pal-grid-${safeSub}`);
+
+        // Add the buttons to their respective subject grids
+        examData.forEach((q, idx) => {
+          if ((q.subject || "General") === sub) {
+            const btn = document.createElement("div");
+            btn.onclick = () => loadQuestion(idx);
+            btn.id = `pal-${idx}`;
+            btn.className = `nta-btn ${userState[idx].status}`;
+            btn.innerText = idx + 1;
+            subGrid.appendChild(btn);
+          }
+        });
+      });
       updateLegend();
     }
 
@@ -1137,10 +1162,9 @@
     function submitExamCore() {
       clearInterval(timerInterval);
       const payload = {
+        test_id: Date.now().toString(), // NEW: Unique ID for this specific exam attempt
         markingScheme: markingScheme,
-        totalTimeSeconds:
-          parseInt(document.getElementById("config-time").value) * 60 -
-          timeRemainingSeconds,
+        totalTimeSeconds: parseInt(document.getElementById("config-time").value) * 60 - timeRemainingSeconds,
         responses: userState.map((st, idx) => ({
           q_id: examData[idx].q_id,
           selectedOption: st.selectedOption,
