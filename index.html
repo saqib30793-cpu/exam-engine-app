@@ -835,9 +835,33 @@
         " ",
       );
 
-      document.getElementById("q-text").innerHTML = marked.parse(
-        q.question_text || "",
-      );
+      // 1. Parse the standard text
+      let fullTextHTML = marked.parse(q.question_text || "");
+
+      // 2. NEW: Detect and draw the table if the AI found one!
+      if (q.tables && q.tables.has_table && q.tables.question_table_data && q.tables.question_table_data.length > 0) {
+        let tableHTML = '<div class="markdown-table-wrapper w-full overflow-x-auto mt-4 mb-4"><table class="w-full text-sm text-left border border-slate-200 rounded-lg">';
+        
+        q.tables.question_table_data.forEach((row, rowIndex) => {
+          tableHTML += '<tr class="border-b border-slate-200">';
+          row.forEach(cell => {
+            // We run marked.parse on each cell so MathJax equations render inside the table!
+            const cellContent = cell ? marked.parseInline(cell) : ''; 
+            if (rowIndex === 0) {
+              tableHTML += `<th class="px-4 py-3 bg-slate-50 font-bold text-slate-700 border-r border-slate-200 last:border-0">${cellContent}</th>`;
+            } else {
+              tableHTML += `<td class="px-4 py-3 text-slate-600 border-r border-slate-200 last:border-0">${cellContent}</td>`;
+            }
+          });
+          tableHTML += '</tr>';
+        });
+        
+        tableHTML += '</table></div>';
+        fullTextHTML += tableHTML; // Attach the table below the text
+      }
+
+      // 3. Push everything to the screen
+      document.getElementById("q-text").innerHTML = fullTextHTML;
 
       const imgEl = document.getElementById("q-image");
       if (q.visuals?.question_image_path) {
