@@ -484,7 +484,8 @@ function animateValue(obj, start, end, duration) {
     // --- 3. UI & Rank Predictor (PRESERVED) ---
     function updateUI() {
       document.getElementById("exam-subtitle").innerText = `${examConfig.markingScheme.toUpperCase()} Pattern`;
-      document.getElementById("stat-score").innerText = analytics.totalScore;
+      // document.getElementById("stat-score").innerText = analytics.totalScore;
+      animateValue(document.getElementById("stat-score"), 0, analytics.totalScore, 1500);
       document.getElementById("stat-max-score").innerText = `/ ${analytics.maxScore}`;
 
       const acc = analytics.correct + analytics.wrong === 0 ? 0 : ((analytics.correct / (analytics.correct + analytics.wrong)) * 100).toFixed(1);
