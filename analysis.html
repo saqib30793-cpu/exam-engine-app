@@ -860,25 +860,33 @@
           const uAns = item.userResponse;
 
           // Format Correct Answer string
+          // SMART MATCHING for Question Types
+          const qTypeLower = (q.question_type || "").toLowerCase();
+          const isNumerical = qTypeLower.includes("numerical") || qTypeLower.includes("integer") || qTypeLower.includes("fill");
+          const isMulti = qTypeLower.includes("multi");
+
+          // Format Correct Answer string
           let correctStr = "Unknown";
-          if (q.question_type === "numerical") {
+          if (isNumerical) {
             correctStr = q.numerical_answer || "N/A";
-          } else if (q.question_type === "mcq_multiple") {
+          } else if (isMulti) {
             correctStr = (q.correct_answer_indices || [])
-              .map((i) => String.fromCharCode(65 + i))
+              .map((i) => String.fromCharCode(65 + parseInt(i)))
               .join(", ");
           } else {
-            const idx = Array.isArray(q.correct_answer_indices)
-              ? q.correct_answer_indices[0]
-              : q.correct_answer_indices;
-            if (idx !== undefined) correctStr = String.fromCharCode(65 + idx);
+            const idx = Array.isArray(q.correct_answer_indices) ? q.correct_answer_indices[0] : q.correct_answer_indices;
+            if (idx !== undefined && idx !== null) correctStr = String.fromCharCode(65 + parseInt(idx));
           }
 
           // Format User Answer string
           let userStr = uAns;
-          if (q.question_type === "mcq_multiple") {
-            userStr = Array.isArray(uAns)
-              ? uAns.map((i) => String.fromCharCode(65 + i)).join(", ")
+          if (isMulti) {
+            userStr = Array.isArray(uAns) && uAns.length > 0
+              ? uAns.map((i) => String.fromCharCode(65 + parseInt(i))).join(", ")
+              : "None";
+          } else if (!isNumerical) {
+            userStr = (uAns !== null && uAns !== "") 
+              ? String.fromCharCode(65 + parseInt(uAns)) 
               : "None";
           } else if (q.question_type !== "numerical") {
             userStr =
