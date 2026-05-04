@@ -1015,6 +1015,10 @@
         })),
       };
       localStorage.setItem("examResult", JSON.stringify(payload));
+      
+      // 🚀 BULLETPROOF FIX: Save the raw exam data locally so the analysis page doesn't rely on the sleepy cloud server!
+      localStorage.setItem("examRawData", JSON.stringify(examData));
+      
       window.location.href = "analysis.html";
     }
   </script>
