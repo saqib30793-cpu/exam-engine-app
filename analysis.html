@@ -370,12 +370,23 @@ function animateValue(obj, start, end, duration) {
       examConfig = JSON.parse(resultStr);
       userResponses = examConfig.responses;
 
-      try {
-        const response = await fetch("https://ai-exam-engine-backend-lqul.onrender.com/final_database_ready.json");
-        rawExamData = await response.json();
-        applySubjectClassification();
-      } catch (err) {
-        alert("Could not load database JSON.");
+      // 🚀 BULLETPROOF FIX: Read directly from local browser storage
+      const rawDataStr = localStorage.getItem("examRawData");
+      
+      if (rawDataStr) {
+          rawExamData = JSON.parse(rawDataStr);
+          applySubjectClassification();
+      } else {
+          // Fallback just in case they bypass local storage
+          try {
+            const response = await fetch("https://ai-exam-engine-backend-lqul.onrender.com/final_database_ready.json");
+            if (!response.ok) throw new Error("404");
+            rawExamData = await response.json();
+            applySubjectClassification();
+          } catch (err) {
+            alert("Error: The cloud server went to sleep and wiped the JSON. Please start a new exam from the dashboard.");
+            window.location.href = "index.html";
+          }
       }
     };
 
