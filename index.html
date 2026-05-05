@@ -664,7 +664,7 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
         terminalLogs.scrollTop = terminalLogs.scrollHeight;
       }
 
-      appendLog(`Uploading ${selectedFile.name}...`);
+      appendLog(`Uploading ${selectedExamFile.name}...`);
       const evtSource = new EventSource('https://ai-exam-engine-backend-lqul.onrender.com/stream_logs');
 
       let rejectedImages = new Set();
