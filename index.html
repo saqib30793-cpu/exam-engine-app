@@ -669,6 +669,46 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
         return;
       }
 
+      // ⚡ THE FIX: FAST-TRACK LOCAL CACHE CHECK!
+      // Check the hard drive BEFORE uploading to the cloud server
+      if (localDirectoryHandle) {
+          try {
+              // 1. Replicate Python's secure filename logic
+              let safeFileName = "";
+              for (let c of selectedExamFile.name) {
+                  if (/[a-zA-Z0-9 \.]/.test(c)) safeFileName += c;
+              }
+              safeFileName = safeFileName.replace(/\s+$/, ""); // Remove trailing spaces
+              const safeBaseName = safeFileName.replace(/\.[^/.]+$/, ""); // Remove .pdf extension
+
+              // 2. Dig into the linked folder to see if this specific exam exists
+              const jsonDirHandle = await getDirHandleRecursive(localDirectoryHandle, `extracted_json/${safeBaseName}`);
+              const fileHandle = await jsonDirHandle.getFileHandle("final_database_ready.json");
+              const file = await fileHandle.getFile();
+              
+              // 3. If it exists, copy it to the root so the UI can load it instantly
+              const rootHandle = await localDirectoryHandle.getFileHandle("final_database_ready.json", { create: true });
+              const writable = await rootHandle.createWritable();
+              await writable.write(file);
+              await writable.close();
+
+              console.log("⚡ LOCAL CACHE HIT: Exam found on Hard Drive! Skipping Cloud.");
+              
+              // 4. Hide the upload screen and start the exam instantly!
+              document.getElementById('upload-zones').classList.add('hidden');
+              const setupModal = document.getElementById('setup-modal');
+              if (setupModal) {
+                  setupModal.style.opacity = '0';
+                  setTimeout(() => setupModal.classList.add('hidden'), 700);
+              }
+              startExam();
+              return; // 🛑 STOP HERE! Do not upload or contact the backend!
+          } catch (e) {
+              console.log("Local cache miss. Proceeding to cloud upload...");
+          }
+      }
+
+      // Normal Cloud Upload Logic resumes here...
       btnProcess.disabled = true;
       btnProcess.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processing in Background...`;
       document.getElementById('upload-zones').classList.add('hidden');
