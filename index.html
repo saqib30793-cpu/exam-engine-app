@@ -669,32 +669,32 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
         return;
       }
 
-      // ⚡ THE FIX: FAST-TRACK LOCAL CACHE CHECK!
-      // Check the hard drive BEFORE uploading to the cloud server
+     // ⚡ THE FIX: FAST-TRACK LOCAL CACHE CHECK + PDF LOADING
       if (localDirectoryHandle) {
           try {
-              // 1. Replicate Python's secure filename logic
               let safeFileName = "";
               for (let c of selectedExamFile.name) {
                   if (/[a-zA-Z0-9 \.]/.test(c)) safeFileName += c;
               }
-              safeFileName = safeFileName.replace(/\s+$/, ""); // Remove trailing spaces
-              const safeBaseName = safeFileName.replace(/\.[^/.]+$/, ""); // Remove .pdf extension
+              safeFileName = safeFileName.replace(/\s+$/, "");
+              const safeBaseName = safeFileName.replace(/\.[^/.]+$/, "");
 
-              // 2. Dig into the linked folder to see if this specific exam exists
+              // 1. Find the JSON
               const jsonDirHandle = await getDirHandleRecursive(localDirectoryHandle, `extracted_json/${safeBaseName}`);
               const fileHandle = await jsonDirHandle.getFileHandle("final_database_ready.json");
               const file = await fileHandle.getFile();
               
-              // 3. If it exists, copy it to the root so the UI can load it instantly
               const rootHandle = await localDirectoryHandle.getFileHandle("final_database_ready.json", { create: true });
               const writable = await rootHandle.createWritable();
               await writable.write(file);
               await writable.close();
 
-              console.log("⚡ LOCAL CACHE HIT: Exam found on Hard Drive! Skipping Cloud.");
+              // 2. 🛡️ THE FIX: Load the PDF into the viewer for "View PDF" button
+              const blobUrl = URL.createObjectURL(selectedExamFile);
+              document.getElementById('pdf-viewer').src = blobUrl;
+
+              console.log("⚡ LOCAL CACHE HIT: Exam and PDF loaded from Hard Drive!");
               
-              // 4. Hide the upload screen and start the exam instantly!
               document.getElementById('upload-zones').classList.add('hidden');
               const setupModal = document.getElementById('setup-modal');
               if (setupModal) {
@@ -702,7 +702,7 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
                   setTimeout(() => setupModal.classList.add('hidden'), 700);
               }
               startExam();
-              return; // 🛑 STOP HERE! Do not upload or contact the backend!
+              return; 
           } catch (e) {
               console.log("Local cache miss. Proceeding to cloud upload...");
           }
