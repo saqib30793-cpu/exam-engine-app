@@ -569,7 +569,7 @@
       console.log("🔄 Initiating Silent Auto-Sync & Merge...");
       try {
         // 🛡️ THE FIX: Add a timestamp so the browser NEVER caches the old ZIP
-        const response = await fetch('https://ai-exam-engine-backend-lqul.onrender.com/silent_backup?t=' + Date.now());
+        const response = await fetch('https://multimodal-exam-server.onrender.com/silent_backup?t=' + Date.now());
         const blob = await response.blob();
         
         if (blob.size < 1000) {
@@ -656,7 +656,7 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
       lucide.createIcons();
       
       try {
-        await fetch('https://ai-exam-engine-backend-lqul.onrender.com/cancel_pipeline', {
+        await fetch('https://multimodal-exam-server.onrender.com/cancel_pipeline', {
           method: 'POST'
         });
       } catch (err) {
@@ -724,7 +724,7 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
       }
 
       appendLog(`Uploading ${selectedExamFile.name}...`);
-      const evtSource = new EventSource('https://ai-exam-engine-backend-lqul.onrender.com/stream_logs');
+      const evtSource = new EventSource('https://multimodal-exam-server.onrender.com/stream_logs');
 
       let rejectedImages = new Set();
       const reviewModal = document.getElementById('image-review-modal');
@@ -744,7 +744,7 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
             rejectedImages.clear();
 
             images.forEach(imgName => {
-              const imgPath = `https://ai-exam-engine-backend-lqul.onrender.com/${imgDir}/${imgName}`;
+              const imgPath = `https://multimodal-exam-server.onrender.com/${imgDir}/${imgName}`;
               const div = document.createElement('div');
               div.className = "relative group cursor-pointer border-4 border-white/10 rounded-2xl overflow-hidden hover:border-cyan-400 transition-all bg-black/50 shadow-sm h-48 flex items-center justify-center p-2";
               div.innerHTML = `
@@ -816,7 +816,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
         btnApprove.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Resuming...`;
 
         try {
-          await fetch('https://ai-exam-engine-backend-lqul.onrender.com/approve_images', {
+          await fetch('https://multimodal-exam-server.onrender.com/approve_images', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ delete: Array.from(rejectedImages) })
@@ -834,7 +834,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
         // 1. Upload Answer Key FIRST (if provided)
         if (selectedKeyFile) {
             appendLog(`Uploading Answer Key: ${selectedKeyFile.name}...`);
-            await fetch('https://ai-exam-engine-backend-lqul.onrender.com/upload_answer_key', {
+            await fetch('https://multimodal-exam-server.onrender.com/upload_answer_key', {
                 method: 'POST',
                 headers: { 'File-Name': encodeURIComponent(selectedKeyFile.name) },
                 body: selectedKeyFile
@@ -844,7 +844,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
 
         // 2. Upload Main Exam AND trigger the pipeline
         appendLog(`Uploading Main Exam: ${selectedExamFile.name}...`);
-        await fetch('https://ai-exam-engine-backend-lqul.onrender.com/upload_pdf', {
+        await fetch('https://multimodal-exam-server.onrender.com/upload_pdf', {
           method: 'POST',
           headers: { 
             'File-Name': encodeURIComponent(selectedExamFile.name),
@@ -880,7 +880,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
 
         // 2. CLOUD FALLBACK: If no local folder or file is missing, fetch from Render
         if (!jsonData) {
-            const response = await fetch("https://ai-exam-engine-backend-lqul.onrender.com/final_database_ready.json?t=" + Date.now());
+            const response = await fetch("https://multimodal-exam-server.onrender.com/final_database_ready.json?t=" + Date.now());
             if (!response.ok) throw new Error("JSON Database not ready.");
             jsonData = await response.json();
             console.log("☁️ Loaded Exam Data from CLOUD Server.");
@@ -1040,7 +1040,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
       // --- LOCAL FIRST: Main Question Image ---
       const imgEl = document.getElementById("q-image");
       if (q.visuals?.question_image_path) {
-        let finalUrl = "https://ai-exam-engine-backend-lqul.onrender.com/" + q.visuals.question_image_path;
+        let finalUrl = "https://multimodal-exam-server.onrender.com/" + q.visuals.question_image_path;
         if (localDirectoryHandle) {
             const localUrl = await getLocalFileUrl(q.visuals.question_image_path);
             if (localUrl) finalUrl = localUrl;
@@ -1081,7 +1081,7 @@ if (msg.includes("PIPELINE COMPLETE")) {
           // --- LOCAL FIRST: Option Images ---
           let optImageHTML = "";
           if (q.visuals?.options_image_paths?.[i]) {
-              let finalOptUrl = "https://ai-exam-engine-backend-lqul.onrender.com/" + q.visuals.options_image_paths[i];
+              let finalOptUrl = "https://multimodal-exam-server.onrender.com/" + q.visuals.options_image_paths[i];
               if (localDirectoryHandle) {
                   const localOptUrl = await getLocalFileUrl(q.visuals.options_image_paths[i]);
                   if (localOptUrl) finalOptUrl = localOptUrl;
