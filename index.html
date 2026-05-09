@@ -298,6 +298,23 @@
     </div>
   </div>
 
+
+  <div id="password-modal" class="hidden fixed inset-0 z-[400] flex items-center justify-center bg-black/90 backdrop-blur-md">
+    <div class="glass-card rounded-3xl p-8 max-w-sm w-full transform transition-all shadow-[0_0_50px_rgba(34,211,238,0.15)] text-center border border-cyan-500/30">
+      <div class="w-16 h-16 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-[0_0_20px_rgba(34,211,238,0.2)]">
+        <i data-lucide="lock" class="w-8 h-8"></i>
+      </div>
+      <h2 class="text-2xl font-black text-white mb-2 tracking-tight">System Locked</h2>
+      <p class="text-slate-400 mb-6 font-light text-sm">Enter the master password to awaken the Gemini API engines.</p>
+      
+      <input type="password" id="server-password-input" placeholder="Enter password..." class="w-full bg-black/50 border border-white/20 rounded-xl p-4 text-center text-white font-mono focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 outline-none mb-6 tracking-widest transition-all shadow-inner">
+      
+      <div class="flex gap-3">
+        <button id="btn-cancel-password" class="flex-1 py-3.5 bg-white/5 hover:bg-white/10 rounded-xl font-bold text-white transition-all active:scale-[0.98]">Cancel</button>
+        <button id="btn-confirm-password" class="flex-1 py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all active:scale-[0.98]">Unlock</button>
+      </div>
+    </div>
+  </div>
   <!-- ========================================== -->
   <!-- MODAL 3: CUSTOM SUBMISSION CONFIRMATION -->
   <!-- ========================================== -->
@@ -663,6 +680,25 @@ const btnCancel = document.getElementById('btn-cancel-pipeline');
         console.error("Failed to send cancel request", err);
       }
     });
+    function getBeautifulPassword() {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('password-modal');
+        const input = document.getElementById('server-password-input');
+        
+        modal.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+        
+        document.getElementById('btn-confirm-password').onclick = () => {
+          modal.classList.add('hidden');
+          resolve(input.value);
+        };
+        document.getElementById('btn-cancel-password').onclick = () => {
+          modal.classList.add('hidden');
+          resolve(null);
+        };
+      });
+    }
     btnProcess.addEventListener('click', async () => {
       if (!selectedExamFile) {
         alert("Please select the Main Exam PDF first!");
@@ -831,10 +867,10 @@ if (msg.includes("PIPELINE COMPLETE")) {
       try {
         let answerKeyFilename = "";
 
-        // 🛡️ THE PASSWORD LOCK: Ask once and use it for both uploads!
-        const serverPassword = prompt("Enter Server Password to start AI extraction:");
+        // 🛡️ THE BEAUTIFUL PASSWORD LOCK
+        const serverPassword = await getBeautifulPassword();
         if (!serverPassword) {
-            appendLog("❌ Upload cancelled: No password provided.");
+            appendLog("❌ Upload cancelled: Vault remained locked.");
             btnProcess.disabled = false;
             btnProcess.innerHTML = `<i data-lucide="cpu" class="w-5 h-5 group-hover:animate-pulse"></i> Initialize Pipeline`;
             document.getElementById('upload-zones').classList.remove('hidden');
