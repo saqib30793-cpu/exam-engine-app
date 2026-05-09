@@ -378,6 +378,7 @@ function animateValue(obj, start, end, duration) {
       
       if (rawDataStr) {
           rawExamData = JSON.parse(rawDataStr);
+          await syncFromCloud(); // ☁️ AUTO-SYNC IN BACKGROUND!
           applySubjectClassification();
       } else {
           // Fallback just in case they bypass local storage
