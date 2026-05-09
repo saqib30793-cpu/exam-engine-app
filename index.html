@@ -831,12 +831,26 @@ if (msg.includes("PIPELINE COMPLETE")) {
       try {
         let answerKeyFilename = "";
 
+        // 🛡️ THE PASSWORD LOCK: Ask once and use it for both uploads!
+        const serverPassword = prompt("Enter Server Password to start AI extraction:");
+        if (!serverPassword) {
+            appendLog("❌ Upload cancelled: No password provided.");
+            btnProcess.disabled = false;
+            btnProcess.innerHTML = `<i data-lucide="cpu" class="w-5 h-5 group-hover:animate-pulse"></i> Initialize Pipeline`;
+            document.getElementById('upload-zones').classList.remove('hidden');
+            terminalContainer.classList.add('hidden');
+            return;
+        }
+
         // 1. Upload Answer Key FIRST (if provided)
         if (selectedKeyFile) {
             appendLog(`Uploading Answer Key: ${selectedKeyFile.name}...`);
             await fetch('https://multimodal-exam-server.onrender.com/upload_answer_key', {
                 method: 'POST',
-                headers: { 'File-Name': encodeURIComponent(selectedKeyFile.name) },
+                headers: { 
+                  'File-Name': encodeURIComponent(selectedKeyFile.name),
+                  'X-Password': serverPassword // 🔒 Password injected here!
+                },
                 body: selectedKeyFile
             });
             answerKeyFilename = encodeURIComponent(selectedKeyFile.name);
@@ -848,7 +862,8 @@ if (msg.includes("PIPELINE COMPLETE")) {
           method: 'POST',
           headers: { 
             'File-Name': encodeURIComponent(selectedExamFile.name),
-            'Answer-Key-File': answerKeyFilename 
+            'Answer-Key-File': answerKeyFilename,
+            'X-Password': serverPassword // 🔒 Password injected here!
           },
           body: selectedExamFile
         });
